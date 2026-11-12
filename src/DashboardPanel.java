@@ -8,11 +8,13 @@ public class DashboardPanel extends JPanel {
 
     public DashboardPanel(InventoryManager inventory) {
         this.inventory = inventory;
+
+        // Use BorderLayout for the whole panel
         setLayout(new BorderLayout(0, 24));
         setBackground(PharmacyTheme.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(32, 32, 32, 32));
 
-        // Header
+        // 1. Header
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
 
@@ -21,7 +23,7 @@ public class DashboardPanel extends JPanel {
         title.setForeground(PharmacyTheme.TEXT_PRIMARY);
         header.add(title, BorderLayout.NORTH);
 
-        JLabel subtitle = new JLabel("Overview of your pharmacy inventory • " +
+        JLabel subtitle = new JLabel("Overview of your pharmacy inventory - " +
                 LocalDate.now().toString());
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         subtitle.setForeground(PharmacyTheme.TEXT_SECONDARY);
@@ -29,28 +31,81 @@ public class DashboardPanel extends JPanel {
 
         add(header, BorderLayout.NORTH);
 
-        // Stat cards grid
+        // 2. Center Wrapper (Holds Banner + Cards)
+        JPanel centerWrapper = new JPanel();
+        centerWrapper.setLayout(new BoxLayout(centerWrapper, BoxLayout.Y_AXIS));
+        centerWrapper.setOpaque(false);
+
+        // Add the new Status Banner
+        centerWrapper.add(createStatusBanner());
+        centerWrapper.add(Box.createVerticalStrut(24));
+
+        // Add the Stat Cards
         JPanel cardsGrid = new JPanel(new GridLayout(2, 2, 20, 20));
         cardsGrid.setOpaque(false);
 
         cardsGrid.add(createStatCard("Total Batches",
                 String.valueOf(inventory.getStock().size()),
-                "📦", PharmacyTheme.PRIMARY, "All tracked batches"));
+                "B", PharmacyTheme.PRIMARY, "All tracked batches"));
 
         cardsGrid.add(createStatCard("Safe Stock",
                 String.valueOf(countByStatus("safe")),
-                "✓", PharmacyTheme.SAFE, "> 90 days until expiry"));
+                "S", PharmacyTheme.SAFE, "> 90 days until expiry"));
 
         cardsGrid.add(createStatCard("Expiring Soon",
                 String.valueOf(countByStatus("critical") + countByStatus("warning")),
-                "⚠", PharmacyTheme.WARNING, "< 90 days until expiry"));
+                "W", PharmacyTheme.WARNING, "< 90 days until expiry"));
 
-        cardsGrid.add(createStatCard("Expired / Critical",
-                String.valueOf(countByStatus("expired") + countByStatus("critical")),
-                "⚕", PharmacyTheme.DANGER, "Requires immediate action"));
+        cardsGrid.add(createStatCard("Low Stock Alert",
+                String.valueOf(inventory.getLowStockCount()),
+                "L", PharmacyTheme.CRITICAL, "< 10 units remaining"));
 
-        add(cardsGrid, BorderLayout.CENTER);
+        centerWrapper.add(cardsGrid);
+        add(centerWrapper, BorderLayout.CENTER);
     }
+
+    // --- NEW: THE STATUS BANNER ---
+    private JPanel createStatusBanner() {
+        int expired = countByStatus("expired");
+        int critical = countByStatus("critical");
+        int lowStock = inventory.getLowStockCount();
+
+        JPanel banner = new JPanel(new BorderLayout());
+        banner.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
+
+        if (expired > 0 || critical > 0 || lowStock > 0) {
+            // WARNING STATE
+            banner.setBackground(new Color(255, 243, 224)); // Light amber background
+            banner.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(PharmacyTheme.WARNING, 1),
+                    BorderFactory.createEmptyBorder(0, 0, 0, 0)
+            ));
+
+            StringBuilder msg = new StringBuilder("<html><b>Action Required:</b><br>");
+            if (expired > 0) msg.append("- ").append(expired).append(" expired batches detected. Remove immediately.<br>");
+            if (critical > 0) msg.append("- ").append(critical).append(" batches expiring in less than 30 days.<br>");
+            if (lowStock > 0) msg.append("- ").append(lowStock).append(" items are running low on stock.");
+            msg.append("</html>");
+
+            JLabel msgLabel = new JLabel(msg.toString());
+            msgLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            msgLabel.setForeground(new Color(102, 60, 0)); // Dark brown/amber text
+            banner.add(msgLabel, BorderLayout.CENTER);
+
+        } else {
+            // ALL CLEAR STATE
+            banner.setBackground(new Color(232, 245, 233)); // Light green background
+            banner.setBorder(BorderFactory.createLineBorder(PharmacyTheme.SAFE, 1));
+
+            JLabel msgLabel = new JLabel("<html><b>All Clear:</b> Inventory is up to date. No immediate actions required.</html>");
+            msgLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            msgLabel.setForeground(new Color(27, 94, 32)); // Dark green text
+            banner.add(msgLabel, BorderLayout.CENTER);
+        }
+
+        return banner;
+    }
+    // --------------------------------
 
     private JPanel createStatCard(String label, String value, String icon,
                                   Color accent, String description) {
@@ -61,12 +116,11 @@ public class DashboardPanel extends JPanel {
                 BorderFactory.createEmptyBorder(24, 24, 24, 24)
         ));
 
-        // Top: icon + label
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
 
         JLabel iconLabel = new JLabel(icon);
-        iconLabel.setFont(new Font("Segoe UI", Font.PLAIN, 24));
+        iconLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         iconLabel.setForeground(accent);
         top.add(iconLabel, BorderLayout.WEST);
 
@@ -77,13 +131,11 @@ public class DashboardPanel extends JPanel {
 
         card.add(top, BorderLayout.NORTH);
 
-        // Center: big number
         JLabel valueLabel = new JLabel(value);
         valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 42));
         valueLabel.setForeground(PharmacyTheme.TEXT_PRIMARY);
         card.add(valueLabel, BorderLayout.CENTER);
 
-        // Bottom: description
         JLabel descLabel = new JLabel(description);
         descLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         descLabel.setForeground(PharmacyTheme.TEXT_SECONDARY);

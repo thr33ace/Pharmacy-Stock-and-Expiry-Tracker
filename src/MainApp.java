@@ -5,16 +5,30 @@ import javax.swing.*;
 
 public class MainApp {
     public static void main(String[] args) {
-
         PharmacyTheme.apply();
 
-        Scanner scanner = new Scanner(System.in);
         InventoryManager inventory = new InventoryManager();
         inventory.loadFromFile("stock.csv");
-        SwingUtilities.invokeLater(() -> {
-            MainFrame frame = new MainFrame(inventory);
-            frame.setVisible(true);
-        });
+
+        // --- STARTUP NOTIFICATIONS ---
+        int expiredCount = 0;
+        int criticalCount = 0;
+        int lowStockCount = inventory.getLowStockCount();
+
+        for (Batch b : inventory.getStock()) {
+            if (b.isExpired()) expiredCount++;
+            else if (b.getDaysUntilExpiry() < 30) criticalCount++;
+        }
+
+        if (expiredCount > 0 || criticalCount > 0 || lowStockCount > 0) {
+            String message = "ALERT: Attention Required:\n\n";
+            if (expiredCount > 0) message += "- " + expiredCount + " Expired batches found.\n";
+            if (criticalCount > 0) message += "- " + criticalCount + " Batches expiring in < 30 days.\n";
+            if (lowStockCount > 0) message += "- " + lowStockCount + " Items running low on stock (< 10 units).\n";
+
+            JOptionPane.showMessageDialog(null, message, "MediStock Alerts", JOptionPane.WARNING_MESSAGE);
+        }
+
         boolean running = true;
         System.out.println("=== PHARMACY EXPIRY ALERT SYSTEM ===");
 
