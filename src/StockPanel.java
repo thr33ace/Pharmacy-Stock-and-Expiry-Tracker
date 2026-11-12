@@ -1,11 +1,13 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 
 public class StockPanel extends JPanel {
     private InventoryManager inventory;
-    private JTable table; // <-- Table is declared here at the top
+    private JTable table;
+    private DefaultTableModel model;
 
     public StockPanel(InventoryManager inventory) {
         this.inventory = inventory;
@@ -13,7 +15,7 @@ public class StockPanel extends JPanel {
         setBackground(PharmacyTheme.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(32, 32, 32, 32));
 
-        // Header
+        // 1. Header (Title + Add Button)
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
 
@@ -32,13 +34,35 @@ public class StockPanel extends JPanel {
 
         add(header, BorderLayout.NORTH);
 
-        // Table inside a card
-        JPanel tableCard = new JPanel(new BorderLayout());
+        // 2. Main Card (Holds Search Bar and Table)
+        JPanel tableCard = new JPanel(new BorderLayout(0, 16));
         tableCard.setBackground(PharmacyTheme.SURFACE);
         tableCard.setBorder(BorderFactory.createLineBorder(PharmacyTheme.BORDER, 1));
+        tableCard.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
+        // --- SEARCH BAR ---
+        JPanel searchPanel = new JPanel(new BorderLayout(0, 8));
+        searchPanel.setOpaque(false);
+
+        JLabel searchLabel = new JLabel("Search Medicine or Batch:");
+        searchLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        searchLabel.setForeground(PharmacyTheme.TEXT_SECONDARY);
+
+        JTextField searchField = new JTextField();
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(PharmacyTheme.BORDER, 1),
+                BorderFactory.createEmptyBorder(8, 12, 8, 12)
+        ));
+
+        searchPanel.add(searchLabel, BorderLayout.NORTH);
+        searchPanel.add(searchField, BorderLayout.CENTER);
+        tableCard.add(searchPanel, BorderLayout.NORTH);
+        // --------------------
+
+        // 3. Table Setup
         String[] columns = {"Medicine", "Batch No.", "Quantity", "Expiry Date", "Status"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+        model = new DefaultTableModel(columns, 0) {
             public boolean isCellEditable(int row, int column) { return false; }
         };
 
@@ -52,8 +76,29 @@ public class StockPanel extends JPanel {
             });
         }
 
-        // Notice there is no "JTable" keyword here, just "table ="
         table = new JTable(model);
+
+        // --- INSTANT SEARCH LOGIC ---
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        table.setRowSorter(sorter);
+
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+
+            private void filter() {
+                String text = searchField.getText().trim();
+                if (text.length() == 0) {
+                    sorter.setRowFilter(null);
+                } else {
+                    sorter.setRowFilter(javax.swing.RowFilter.regexFilter("(?i)" + text));
+                }
+            }
+        });
+        // ----------------------------
+
+        // Table Styling
         table.setRowHeight(48);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -62,7 +107,6 @@ public class StockPanel extends JPanel {
         table.setIntercellSpacing(new Dimension(0, 0));
         table.setShowGrid(false);
 
-        // Status column: colored badge renderer
         table.getColumnModel().getColumn(4).setCellRenderer(new StatusBadgeRenderer());
         table.getColumnModel().getColumn(2).setCellRenderer(new CenterRenderer());
 
@@ -78,9 +122,8 @@ public class StockPanel extends JPanel {
         return "SAFE";
     }
 
-    // This is the method that updates the table when you add a new batch
+    // Updates the table when a new batch is added
     public void refreshTable() {
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0); // Clear existing rows
 
         for (Batch b : inventory.getStock()) {
@@ -119,7 +162,7 @@ public class StockPanel extends JPanel {
 
                 inventory.addBatch(medName, batchNo, quantity, expDate);
                 inventory.saveToFile("stock.csv");
-                refreshTable(); // This updates the screen!
+                refreshTable();
 
                 JOptionPane.showMessageDialog(this, "Batch added successfully!",
                         "Success", JOptionPane.INFORMATION_MESSAGE);
@@ -134,7 +177,7 @@ public class StockPanel extends JPanel {
         }
     }
 
-    // Custom renderer: colored status pill
+    // Colored status pill renderer
     class StatusBadgeRenderer extends DefaultTableCellRenderer {
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {

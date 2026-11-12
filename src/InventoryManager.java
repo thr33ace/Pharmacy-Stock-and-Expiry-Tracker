@@ -263,4 +263,13 @@ public class InventoryManager {
 
         return result.toString();
     }
+    public int getLowStockCount() {
+        int count = 0;
+        for (Batch batch : stock) {
+            if (!batch.isExpired() && batch.getQuantity() < 10) {
+                count++;
+            }
+        }
+        return count;
+    }
 }
