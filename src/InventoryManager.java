@@ -274,7 +274,6 @@ public class InventoryManager {
         }
         return count;
     }
-<<<<<<< HEAD
     public void recordTransaction(String medName, String batchNum, int qty) {
         transactions.add(new Transaction(medName, batchNum, qty));
     }
@@ -296,6 +295,5 @@ public class InventoryManager {
             System.out.println("Error exporting transactions: " + e.getMessage());
         }
     }
-=======
->>>>>>> c77e166ce7a680e021415ef49ea1d311ab6123d8
+
 }
