@@ -10,6 +10,14 @@ public class MainApp {
         InventoryManager inventory = new InventoryManager();
         inventory.loadFromFile("stock.csv");
 
+        Scanner scanner = new Scanner(System.in);
+
+        inventory.loadFromFile("stock.csv");
+        SwingUtilities.invokeLater(() -> {
+            MainFrame frame = new MainFrame(inventory);
+            frame.setVisible(true);
+        });
+
         // --- STARTUP NOTIFICATIONS ---
         int expiredCount = 0;
         int criticalCount = 0;

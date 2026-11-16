@@ -82,6 +82,10 @@ public class DispensePanel extends JPanel {
         try {
             int qty = Integer.parseInt(qtyText);
             String result = inventory.dispenseMedicineGUI(name, qty);
+            if (result.contains("Successfully dispensed")) {
+                // We log it for the main batch. (Simplified for this phase)
+                inventory.recordTransaction(name, "MULTI", qty);
+            }
             resultArea.setText(result);
             nameField.setText("");
             qtyField.setText("");

@@ -9,6 +9,8 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
 public class InventoryManager {
     private List<Batch> stock;
 
@@ -271,5 +273,26 @@ public class InventoryManager {
             }
         }
         return count;
+    }
+    public void recordTransaction(String medName, String batchNum, int qty) {
+        transactions.add(new Transaction(medName, batchNum, qty));
+    }
+    private List<Transaction> transactions = new ArrayList<>();
+    public List<Transaction> getTransactions() {
+        return transactions;
+    }
+
+    public void exportTransactions(String filename) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+            writer.println("TransactionID,MedicineName,BatchNumber,Quantity,Timestamp");
+            for (Transaction t : transactions) {
+                writer.println(t.getId() + "," + t.getMedicineName() + "," +
+                        t.getBatchNumber() + "," + t.getQuantity() + "," +
+                        t.getTimestamp().toString());
+            }
+            System.out.println("Transactions exported to " + filename);
+        } catch (IOException e) {
+            System.out.println("Error exporting transactions: " + e.getMessage());
+        }
     }
 }

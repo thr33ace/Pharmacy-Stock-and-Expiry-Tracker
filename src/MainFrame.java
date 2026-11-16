@@ -26,6 +26,7 @@ public class MainFrame extends JFrame {
         contentPanel.add(new StockPanel(inventory), "STOCK");
         contentPanel.add(new DispensePanel(inventory), "DISPENSE");
         contentPanel.add(new AlertsPanel(inventory), "ALERTS");
+        contentPanel.add(new HistoryPanel(inventory), "HISTORY");
 
         add(contentPanel, BorderLayout.CENTER);
 
@@ -63,6 +64,7 @@ public class MainFrame extends JFrame {
         menuPanel.add(createMenuItem("Dispense", "DISPENSE"));
         menuPanel.add(Box.createVerticalStrut(8));
         menuPanel.add(createMenuItem("Expiry Alerts", "ALERTS"));
+        menuPanel.add(createMenuItem("History", "HISTORY"));
 
         sidebar.add(menuPanel, BorderLayout.CENTER);
 
