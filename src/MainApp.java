@@ -10,6 +10,30 @@ public class MainApp {
         InventoryManager inventory = new InventoryManager();
         inventory.loadFromFile("stock.csv");
 
+<<<<<<< HEAD
+=======
+        // --- STARTUP NOTIFICATIONS ---
+        int expiredCount = 0;
+        int criticalCount = 0;
+        int lowStockCount = inventory.getLowStockCount();
+
+        for (Batch b : inventory.getStock()) {
+            if (b.isExpired()) expiredCount++;
+            else if (b.getDaysUntilExpiry() < 30) criticalCount++;
+        }
+
+        if (expiredCount > 0 || criticalCount > 0 || lowStockCount > 0) {
+            String message = "ALERT: Attention Required:\n\n";
+            if (expiredCount > 0) message += "- " + expiredCount + " Expired batches found.\n";
+            if (criticalCount > 0) message += "- " + criticalCount + " Batches expiring in < 30 days.\n";
+            if (lowStockCount > 0) message += "- " + lowStockCount + " Items running low on stock (< 10 units).\n";
+
+            JOptionPane.showMessageDialog(null, message, "MediStock Alerts", JOptionPane.WARNING_MESSAGE);
+        }
+        // ----------------------------------
+
+        // No more popup! The app just opens cleanly.
+>>>>>>> c77e166ce7a680e021415ef49ea1d311ab6123d8
         Scanner scanner = new Scanner(System.in);
 
         inventory.loadFromFile("stock.csv");
