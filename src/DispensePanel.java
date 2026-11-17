@@ -13,7 +13,6 @@ public class DispensePanel extends JPanel {
         setBackground(PharmacyTheme.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(32, 32, 32, 32));
 
-        // Header
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
         JLabel title = new JLabel("Dispense Medicine");
@@ -22,7 +21,6 @@ public class DispensePanel extends JPanel {
         header.add(title, BorderLayout.WEST);
         add(header, BorderLayout.NORTH);
 
-        // Input Card
         JPanel inputCard = new JPanel(new GridBagLayout());
         inputCard.setBackground(PharmacyTheme.SURFACE);
         inputCard.setBorder(BorderFactory.createLineBorder(PharmacyTheme.BORDER, 1));
@@ -55,7 +53,6 @@ public class DispensePanel extends JPanel {
 
         add(inputCard, BorderLayout.NORTH);
 
-        // Result Area
         resultArea = new JTextArea();
         resultArea.setEditable(false);
         resultArea.setFont(new Font("Consolas", Font.PLAIN, 14));
@@ -82,13 +79,17 @@ public class DispensePanel extends JPanel {
         try {
             int qty = Integer.parseInt(qtyText);
             String result = inventory.dispenseMedicineGUI(name, qty);
-            if (result.contains("Successfully dispensed")) {
-                // We log it for the main batch. (Simplified for this phase)
-                inventory.recordTransaction(name, "MULTI", qty);
-            }
             resultArea.setText(result);
+
+            // THIS IS THE FIX FOR HISTORY:
+            if (!result.startsWith("Error")) {
+                inventory.recordTransaction(name, "DISPENSED", qty);
+                inventory.saveAllData(); // Save immediately so it's not lost
+            }
+
             nameField.setText("");
             qtyField.setText("");
+
         } catch (NumberFormatException e) {
             resultArea.setText("Error: Please enter a valid number for quantity.");
         }

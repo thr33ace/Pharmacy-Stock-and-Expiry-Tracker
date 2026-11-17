@@ -46,7 +46,7 @@ public class AlertsPanel extends JPanel {
         refreshAlerts();
     }
 
-    private void refreshAlerts() {
+    void refreshAlerts() {
         // FIX: Only clear the inner scroll content, NOT the whole panel
         scrollContent.removeAll();
 

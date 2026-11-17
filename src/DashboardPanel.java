@@ -1,7 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DashboardPanel extends JPanel {
     private InventoryManager inventory;
@@ -61,6 +63,28 @@ public class DashboardPanel extends JPanel {
                 "L", PharmacyTheme.CRITICAL, "< 10 units remaining"));
 
         centerWrapper.add(cardsGrid);
+        // --- ADD PIE CHART ---
+        centerWrapper.add(Box.createVerticalStrut(24));
+
+        Map<String, Integer> chartData = new LinkedHashMap<>();
+        chartData.put("Safe", countByStatus("safe"));
+        chartData.put("Warning", countByStatus("warning"));
+        chartData.put("Critical", countByStatus("critical"));
+        chartData.put("Expired", countByStatus("expired"));
+
+        Map<String, Color> chartColors = new LinkedHashMap<>();
+        chartColors.put("Safe", PharmacyTheme.SAFE);
+        chartColors.put("Warning", PharmacyTheme.WARNING);
+        chartColors.put("Critical", PharmacyTheme.CRITICAL);
+        chartColors.put("Expired", PharmacyTheme.DANGER);
+
+        PieChartPanel chart = new PieChartPanel(chartData, chartColors);
+        chart.setPreferredSize(new Dimension(400, 200));
+        chart.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
+        chart.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        centerWrapper.add(chart);
+        // ---------------------
         add(centerWrapper, BorderLayout.CENTER);
     }
 
@@ -153,5 +177,43 @@ public class DashboardPanel extends JPanel {
             else if (status.equals("safe") && !b.isExpired() && b.getDaysUntilExpiry() >= 90) count++;
         }
         return count;
+    }
+
+    public void refreshUI() {
+        removeAll();
+        revalidate();
+        repaint();
+
+        // Rebuild the dashboard
+        setLayout(new BorderLayout(0, 24));
+        setBackground(PharmacyTheme.BACKGROUND);
+        setBorder(BorderFactory.createEmptyBorder(32, 32, 32, 32));
+
+        // (Copy the exact same constructor code here to rebuild the header, banner, and cards)
+        // OR, simpler: just restart the app. But if you want the button to work:
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        JLabel title = new JLabel("Dashboard");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        title.setForeground(PharmacyTheme.TEXT_PRIMARY);
+        header.add(title, BorderLayout.NORTH);
+        add(header, BorderLayout.NORTH);
+
+        JPanel centerWrapper = new JPanel();
+        centerWrapper.setLayout(new BoxLayout(centerWrapper, BoxLayout.Y_AXIS));
+        centerWrapper.setOpaque(false);
+        centerWrapper.add(createStatusBanner());
+        centerWrapper.add(Box.createVerticalStrut(24));
+
+        JPanel cardsGrid = new JPanel(new GridLayout(2, 2, 20, 20));
+        cardsGrid.setOpaque(false);
+        cardsGrid.add(createStatCard("Total Batches", String.valueOf(inventory.getStock().size()), "B", PharmacyTheme.PRIMARY, "All tracked batches"));
+        cardsGrid.add(createStatCard("Safe Stock", String.valueOf(countByStatus("safe")), "S", PharmacyTheme.SAFE, "> 90 days until expiry"));
+        cardsGrid.add(createStatCard("Expiring Soon", String.valueOf(countByStatus("critical") + countByStatus("warning")), "W", PharmacyTheme.WARNING, "< 90 days until expiry"));
+        cardsGrid.add(createStatCard("Low Stock Alert", String.valueOf(inventory.getLowStockCount()), "L", PharmacyTheme.CRITICAL, "< 10 units remaining"));
+
+        centerWrapper.add(cardsGrid);
+        add(centerWrapper, BorderLayout.CENTER);
     }
 }

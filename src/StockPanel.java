@@ -32,6 +32,21 @@ public class StockPanel extends JPanel {
         addBtn.addActionListener(e -> showAddDialog());
         header.add(addBtn, BorderLayout.EAST);
 
+        JButton deleteBtn = new JButton("Delete Selected");
+        deleteBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        deleteBtn.setBackground(PharmacyTheme.DANGER);
+        deleteBtn.setForeground(PharmacyTheme.TEXT_ON_PRIMARY);
+        deleteBtn.setPreferredSize(new Dimension(150, 40));
+        deleteBtn.addActionListener(e -> deleteSelectedBatch());
+
+        JPanel rightButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightButtons.setOpaque(false);
+        rightButtons.add(deleteBtn);
+        rightButtons.add(addBtn);
+
+        header.remove(addBtn); // Remove the old button
+        header.add(rightButtons, BorderLayout.EAST);
+
         add(header, BorderLayout.NORTH);
 
         // 2. Main Card (Holds Search Bar and Table)
@@ -215,5 +230,29 @@ public class StockPanel extends JPanel {
 
     class CenterRenderer extends DefaultTableCellRenderer {
         public CenterRenderer() { setHorizontalAlignment(SwingConstants.CENTER); }
+    }
+
+    private void deleteSelectedBatch() {
+        int viewRow = table.getSelectedRow();
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(this, "Please select a batch to delete.",
+                    "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // CRITICAL: Convert view row to model row (because of the search filter)
+        int modelRow = table.convertRowIndexToModel(viewRow);
+        String batchNum = (String) model.getValueAt(modelRow, 1);
+        String medName = (String) model.getValueAt(modelRow, 0);
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete " + medName + " (Batch: " + batchNum + ")?",
+                "Confirm Delete", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            inventory.removeBatch(batchNum);
+            inventory.saveToFile("stock.csv");
+            refreshTable();
+        }
     }
 }

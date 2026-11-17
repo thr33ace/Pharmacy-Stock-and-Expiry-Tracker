@@ -2,10 +2,18 @@ import javax.swing.*;
 import java.awt.*;
 
 public class MainFrame extends JFrame {
+
+    private DashboardPanel dashboardPanel;
+    private StockPanel stockPanel;
+    private DispensePanel dispensePanel;
+    private AlertsPanel alertsPanel;
+    private HistoryPanel historyPanel;
     private JPanel contentPanel;
     private CardLayout cardLayout;
 
     public MainFrame(InventoryManager inventory) {
+
+
         setTitle("MediStock — Pharmacy Expiry Management");
         setSize(1200, 750);
         setLocationRelativeTo(null);
@@ -22,11 +30,37 @@ public class MainFrame extends JFrame {
         contentPanel = new JPanel(cardLayout);
         contentPanel.setBackground(PharmacyTheme.BACKGROUND);
 
-        contentPanel.add(new DashboardPanel(inventory), "DASHBOARD");
-        contentPanel.add(new StockPanel(inventory), "STOCK");
-        contentPanel.add(new DispensePanel(inventory), "DISPENSE");
-        contentPanel.add(new AlertsPanel(inventory), "ALERTS");
-        contentPanel.add(new HistoryPanel(inventory), "HISTORY");
+        dashboardPanel = new DashboardPanel(inventory);
+        stockPanel = new StockPanel(inventory);
+        dispensePanel = new DispensePanel(inventory);
+        alertsPanel = new AlertsPanel(inventory);
+        historyPanel = new HistoryPanel(inventory);
+
+        contentPanel.add(dashboardPanel, "DASHBOARD");
+        contentPanel.add(stockPanel, "STOCK");
+        contentPanel.add(dispensePanel, "DISPENSE");
+        contentPanel.add(alertsPanel, "ALERTS");
+        contentPanel.add(historyPanel, "HISTORY");
+
+        // --- GLOBAL REFRESH BUTTON ---
+        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        topBar.setOpaque(false);
+        JButton refreshAllBtn = new JButton("Refresh All Data");
+        refreshAllBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        refreshAllBtn.setBackground(PharmacyTheme.SURFACE);
+        refreshAllBtn.setForeground(PharmacyTheme.TEXT_PRIMARY);
+        refreshAllBtn.setBorder(BorderFactory.createLineBorder(PharmacyTheme.BORDER, 1));
+
+        refreshAllBtn.addActionListener(e -> {
+            dashboardPanel.refreshUI();
+            stockPanel.refreshTable();
+            alertsPanel.refreshAlerts();
+            historyPanel.refreshTable();
+        });
+
+        topBar.add(refreshAllBtn);
+        add(topBar, BorderLayout.NORTH);
+        // -----------------------------
 
         add(contentPanel, BorderLayout.CENTER);
 
